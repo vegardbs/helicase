@@ -54,27 +54,31 @@ Deltamu=20.0*K #chemical potential of 1 ATP
 Deltabp=2.0*K #free-energy of 1 bp opening
 n_atp=1. #Number of bp opened by 1-step of the motor
 
-force = forces[6]
+force = forces[0]
 gamma = gammas[0]
 
 #frequency bps
 k0=1000000.
 #montecarlo step
-dt=0.5/k0
+dt=0.5/(k0*50000)
 fmin=0.0
    
-N_steps = 100000
+N_steps = 10000
 N_traces = 1
 
 #print(N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin))
 DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)
-print(k0*np.exp(-DeltaG/2.*K)*dt)
-print(k0*np.exp(DeltaG/2.*K)*dt)
-print(np.exp(-DeltaG/2.*K)/(np.exp(DeltaG/2.*K)))
-print(np.exp(-DeltaG))
+print (DeltaG)
+print(n_atp*Deltamu)
+print(Deltabp)
+print(2.*force*xdefWLC(K,l,p,force))
+print(2.*stretching_energy(K,l,p,force,fmin))
+
+
 # Calculate random traces with same transition rates 
 traces = pd.DataFrame()
 cont=0
+contback=0
 for m in range(N_traces):
     
     N = np.zeros(N_steps)
@@ -87,25 +91,26 @@ for m in range(N_traces):
         step=0
         if alea<0.5: #backwards = rezipping
             DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)    
-            pre=k0*np.exp(DeltaG/(2.*K))*dt
-            #print (pre)
-            if alea2>=pre :
+            pre=k0*np.exp(-DeltaG/(2.*K))*dt
+            print (pre)
+            if alea2<pre :
                 step=-1
+                contback+=1
                 #print (step)
                 print ("rezipping")
-            else :
-                print ("pause")
+            #else :
+                #print ("pause")
         if alea>=0.5: #forward = unzipping
             DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)   
-            pun=k0*np.exp(-DeltaG/(2.*K))*dt
-            #print (pun)
-            if alea2>=pun :
+            pun=k0*np.exp(DeltaG/(2.*K))*dt
+            print (pun)
+            if alea2<pun :
                 step=1
                 cont+=1
                 #print (step)
                 print ("unzipping")
-            else :
-                print ("pause")
+            #else :
+                #print ("pause")
         #returns 
     #np.random.random(1) returns a random number betweem 0 and 1
     #np.sign returns +/1 depending on the sign inside it
@@ -115,9 +120,17 @@ for m in range(N_traces):
     
     traces = traces.append(pd.Series(N),ignore_index = True)
     
+t = np.zeros(N_steps)
+for n in range(1,N_steps):
+    t[n]=dt*n
+
+plt.plot(t,N)
+plt.show()
+
 
 traces = np.transpose(traces)
 print (cont)
+print (contback)
 dN = [None]*(N_traces)
 dN_dt = pd.DataFrame()
 #f & gamma changing
@@ -150,6 +163,7 @@ hist, bin_edges = np.histogram(dN_dt[10].dropna(),bins=50)
 bin_width = bin_edges[1]-bin_edges[0]
 bin_center = bin_edges + bin_width/2
 bin_center = bin_center[0:-1]
+
 
 #%% These are the formulas for the energetics
     
