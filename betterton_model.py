@@ -52,30 +52,29 @@ gammas_phi = [  0.3532,    0.4724,    0.5741,    0.6537,    0.7139,    0.7596,  
 #value of mu(pN/nm), N, etc
 Deltamu=20.0*K #chemical potential of 1 ATP
 Deltabp=2.0*K #free-energy of 1 bp opening
-N=1. #Number of bp opened by 1-step of the motor
+n_atp=1. #Number of bp opened by 1-step of the motor
 
 force = forces[6]
-gamma = gammas[6]
+gamma = gammas[0]
 
 #frequency bps
 k0=1000000.
 #montecarlo step
 dt=0.5/k0
-f'{k0}, {dt}'
 fmin=0.0
    
-N_steps = 100
+N_steps = 100000
 N_traces = 1
 
 #print(N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin))
-DeltaG=N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin)
-print(k0*np.exp(-DeltaG/2)*dt)
-print(k0*np.exp(DeltaG/2)*dt)
-print(k0*np.exp(-DeltaG/2)*dt/(k0*np.exp(DeltaG/2)*dt))
-print(DeltaG)
+DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)
+print(k0*np.exp(-DeltaG/2.*K)*dt)
+print(k0*np.exp(DeltaG/2.*K)*dt)
+print(np.exp(-DeltaG/2.*K)/(np.exp(DeltaG/2.*K)))
+print(np.exp(-DeltaG))
 # Calculate random traces with same transition rates 
 traces = pd.DataFrame()
-
+cont=0
 for m in range(N_traces):
     
     N = np.zeros(N_steps)
@@ -85,22 +84,28 @@ for m in range(N_traces):
         #half the times we check to go forward or backwards
         alea=np.random.random_sample(None)
         alea2=np.random.random_sample(None)
-        alea3=np.random.random_sample(None)
         step=0
-        if alea<0.5: #backwards
-            DeltaG=N*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)    
-            pre=k0*np.exp(-DeltaG/(2.*K))*dt
+        if alea<0.5: #backwards = rezipping
+            DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)    
+            pre=k0*np.exp(DeltaG/(2.*K))*dt
             #print (pre)
-            if alea2>=pre[0] :
+            if alea2>=pre :
                 step=-1
                 #print (step)
-        if alea>=0.5: #forward
-            DeltaG=N*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)   
-            pun=k0*np.exp(DeltaG/(2.*K))*dt
+                print ("rezipping")
+            else :
+                print ("pause")
+        if alea>=0.5: #forward = unzipping
+            DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)   
+            pun=k0*np.exp(-DeltaG/(2.*K))*dt
             #print (pun)
-            if alea3>=pun[0] :
+            if alea2>=pun :
                 step=1
+                cont+=1
                 #print (step)
+                print ("unzipping")
+            else :
+                print ("pause")
         #returns 
     #np.random.random(1) returns a random number betweem 0 and 1
     #np.sign returns +/1 depending on the sign inside it
@@ -112,7 +117,7 @@ for m in range(N_traces):
     
 
 traces = np.transpose(traces)
-
+print (cont)
 dN = [None]*(N_traces)
 dN_dt = pd.DataFrame()
 #f & gamma changing
