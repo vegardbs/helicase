@@ -9,7 +9,7 @@ Created on Wed Oct  3 12:14:52 2018
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import math
+#import math
 
 
 #functions related to elasticity of WLC
@@ -36,27 +36,26 @@ def intfdexWLC (kbt, l, p, f):
     return kbt*l/(4.*p)*(1./(1.-l0/l)+2*l0*l0/(l*l)-l0/l)
 
 def stretching_energy(K,l,p,f,fmin):
-    return intfdexWLC(K,l,p,f)-intfdexWLC(K,l,p,fmin)
+    total= intfdexWLC(K,l,p,f)-intfdexWLC(K,l,p,fmin)
+    return total
 
 # Experimental parameters
 
-p = 0.75;   
-K = 4.114;
-l = 0.66; 
-forces = [5,6,7,8,9,10,11,12]
-gammas = [ 0.5538,    0.6155,    0.6668  ,  0.7100 ,   0.7466   , 0.7781  ,  0.8054 ,  0.8293];    
-gammas_phi = [  0.3532,    0.4724,    0.5741,    0.6537,    0.7139,    0.7596,    0.7951,    0.8293];
+p = 0.75   
+K = 4.114
+l = 0.66
+forces = [ 5. ,6. ,7. , 8., 9., 10., 11., 12.]
+gammas = [ 0.5538,    0.6155,    0.6668  ,  0.7100 ,   0.7466   , 0.7781  ,  0.8054 ,  0.8293]   
+gammas_phi = [  0.3532,    0.4724,    0.5741,    0.6537,    0.7139,    0.7596,    0.7951,    0.8293]
 
  
 #value of mu(pN/nm), N, etc
-Deltamu=20.0*K; #chemical potential of 1 ATP
-Deltabp=2.0*K; #free-energy of 1 bp opening
-N=1.; #Number of bp opened by 1-step of the motor
+Deltamu=20.0*K #chemical potential of 1 ATP
+Deltabp=2.0*K #free-energy of 1 bp opening
+N=1. #Number of bp opened by 1-step of the motor
 
 force = forces[6]
-gamma = gammas[6] 
-
-#RIGHT NOW I AM NOT CONSIDERING ANY GAMMA, HENCE GAMMA=1, I WILL IMPLEMENT IT LATER
+gamma = gammas[6]
 
 #frequency bps
 k0=1000000.
@@ -65,11 +64,15 @@ dt=0.5/k0
 f'{k0}, {dt}'
 fmin=0.0
    
-N_steps = 10000
+N_steps = 100
 N_traces = 1
 
-
-
+#print(N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin))
+DeltaG=N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin)
+print(k0*np.exp(-DeltaG/2)*dt)
+print(k0*np.exp(DeltaG/2)*dt)
+print(k0*np.exp(-DeltaG/2)*dt/(k0*np.exp(DeltaG/2)*dt))
+print(DeltaG)
 # Calculate random traces with same transition rates 
 traces = pd.DataFrame()
 
@@ -80,21 +83,24 @@ for m in range(N_traces):
     for n in range (1,N_steps):
        #probabilities of going forward & backward
         #half the times we check to go forward or backwards
-        alea=np.random.random(1)
+        alea=np.random.random_sample(None)
+        alea2=np.random.random_sample(None)
+        alea3=np.random.random_sample(None)
+        step=0
         if alea<0.5: #backwards
-            DeltaG=N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin)    
-            pre=k0*np.exp(-DeltaG/2)*dt
-            f'{pre}'
-            alea2=np.random.random(1)
-            if alea2>=pre :
+            DeltaG=N*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)    
+            pre=k0*np.exp(-DeltaG/(2.*K))*dt
+            #print (pre)
+            if alea2>=pre[0] :
                 step=-1
+                #print (step)
         if alea>=0.5: #forward
-            DeltaG=N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin)    S
-            pun=k0*np.exp(DeltaG/2)*dt
-            f'{pun}'
-            alea3=np.random.random(1)
-            if alea3>=pun :
+            DeltaG=N*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)   
+            pun=k0*np.exp(DeltaG/(2.*K))*dt
+            #print (pun)
+            if alea3>=pun[0] :
                 step=1
+                #print (step)
         #returns 
     #np.random.random(1) returns a random number betweem 0 and 1
     #np.sign returns +/1 depending on the sign inside it
