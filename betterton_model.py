@@ -1,14 +1,8 @@
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Oct  3 12:14:52 2018
-@author: vegard
-"""
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
+import seaborn as sns
 #import math
 
 
@@ -68,13 +62,15 @@ N_traces = 1
 
 #print(N*Deltamu-Deltabp+2*force*xdefWLC(K,l,p,force)-2*stretching_energy(K,l,p,force,fmin))
 DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)
-print (DeltaG)
-print(n_atp*Deltamu)
-print(Deltabp)
-print(2.*force*xdefWLC(K,l,p,force))
-print(2.*stretching_energy(K,l,p,force,fmin))
-
-
+#print (DeltaG)
+#print(n_atp*Deltamu)
+#print(Deltabp)
+#print(2.*force*xdefWLC(K,l,p,force))
+#print(2.*stretching_energy(K,l,p,force,fmin))
+print("pre")
+print(k0*np.exp(-DeltaG/(2.*K))*dt)
+print("pun")
+print(k0*np.exp(DeltaG/(2.*K))*dt)
 # Calculate random traces with same transition rates 
 traces = pd.DataFrame()
 cont=0
@@ -92,7 +88,7 @@ for m in range(N_traces):
         if alea<0.5: #backwards = rezipping
             DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)    
             pre=k0*np.exp(-DeltaG/(2.*K))*dt
-            print (pre)
+            print (alea2)
             if alea2<pre :
                 step=-1
                 contback+=1
@@ -103,7 +99,7 @@ for m in range(N_traces):
         if alea>=0.5: #forward = unzipping
             DeltaG=n_atp*Deltamu-Deltabp+2.*force*xdefWLC(K,l,p,force)-2.*stretching_energy(K,l,p,force,fmin)   
             pun=k0*np.exp(DeltaG/(2.*K))*dt
-            print (pun)
+            print (alea2)
             if alea2<pun :
                 step=1
                 cont+=1
@@ -119,13 +115,14 @@ for m in range(N_traces):
         N[n] = N[n-1] + step
     
     traces = traces.append(pd.Series(N),ignore_index = True)
-    
-t = np.zeros(N_steps)
-for n in range(1,N_steps):
-    t[n]=dt*n
+    t = np.zeros(N_steps)
+    for n in range(1,N_steps):
+        t[n]=dt*n
 
-plt.plot(t,N)
-plt.show()
+    plt.plot(t,N)
+    plt.show()
+    #time.sleep(2.5)
+    #print("GO")
 
 
 traces = np.transpose(traces)
@@ -140,7 +137,7 @@ for k in range(1,6):
 
         n = 0
         dt_1 = 0
-        dt_2 = k*5
+        dt_2 = k*1000
         dN_temp = np.zeros(N_steps-dt_2)  
         
         while dt_2 < N_steps:
@@ -163,6 +160,22 @@ hist, bin_edges = np.histogram(dN_dt[10].dropna(),bins=50)
 bin_width = bin_edges[1]-bin_edges[0]
 bin_center = bin_edges + bin_width/2
 bin_center = bin_center[0:-1]
+x=np.zeros(50)
+for n in range (1,50):
+    x[n]=bin_width/50*n
+
+plt.plot(x,hist)
+plt.show()
+
+#dx=
+n, bins, patches = plt.hist(dN_dt[10].dropna(), bins=50, color='#0504aa', alpha=0.7, rwidth=0.85)
+maxfreq=n.max()
+plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
+plt.show()
+
+
+sns.set_style('darkgrid')
+sns.distplot(dN_dt[10].dropna(),fit=stats.gaussian,kde=False)
 
 
 #%% These are the formulas for the energetics
