@@ -175,7 +175,7 @@ plt.show()
 
 
 sns.set_style('darkgrid')
-sns.distplot(dN_dt[10].dropna(),fit=stats.gaussian,kde=False)
+sns.distplot(dN_dt[10].dropna(),fit=stats.invgauss,kde=False)
 
 
 #%% These are the formulas for the energetics
